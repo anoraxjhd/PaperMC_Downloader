@@ -1,4 +1,4 @@
-A Bad Program to get paper Versions
+**A Bad Program to get paper Versions**
 
 if you want to use this then 
 ``pip install requests customtkinter``
