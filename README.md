@@ -4,4 +4,4 @@ if you want to use this then
 ``pip install requests customtkinter``
 
 Then run the file type the version you want
-copy the URL and download open it this will download  the wanted paper Version
+copy the URL and download and open it this will download the wanted paper Version
