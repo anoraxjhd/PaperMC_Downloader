@@ -1,7 +1,7 @@
 import requests
 import customtkinter as ctk
 from tkinter import messagebox as mb
-import keyboard
+
 extra_help = True
 debug = False
 console = False
@@ -75,4 +75,5 @@ submit.pack(padx=20, pady=8)
 
 copy_label = ctk.CTkLabel(app, text="NAN")
 copy_label.pack(padx=28830, pady=14550)
+
 app.mainloop()
