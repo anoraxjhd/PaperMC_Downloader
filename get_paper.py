@@ -1,79 +1,58 @@
-import requests
+# Imports
+from requests import get
 import customtkinter as ctk
 from tkinter import messagebox as mb
+from webbrowser import open
 
-extra_help = True
-debug = False
-console = False
-ErrorTesting = False
-if debug == True:
-    if ErrorTesting == True:
-        URL = "https://google.com/DEBUG/api"
-else:
-    URL = "https://qing762.is-a.dev/api/papermc"
-       
+# Settings
+ctk.set_appearance_mode("dark")
+URL = "https://qing762.is-a.dev/api/papermc/"
+allowedStatus = [
+  200, 203
+]
 
-response = requests.get(URL)
-response.encoding = "utf-8"
-
-if response.status_code == 200:
-    if debug == True:
-        if console == True:
-            print("Erfolgreich Verbunden.")
+def getData():
+  global data
+  response = get(URL)
+  status = response.status_code
+  if status in allowedStatus:
     data = response.json()
-    if console == True:
-        print(response.text)
-else:
-    ConnectionErrorOnRequest1 = 'Fehler beim Verbinden mit dem Server. Status Code: '
-    ConnectionErrorOnRequest2 = response.status_code
-    ConnectionErrorOnRequest = ConnectionErrorOnRequest1 + str(ConnectionErrorOnRequest2)
-    mb.showerror("Fehler beim Verbinden mit dem Server.", ConnectionErrorOnRequest)
-    if console == True:
-         print("Error While Connecting: ",ConnectionErrorOnRequest)
-    if response.status_code == 404:
-            mb.showerror("Fehler 404", "Die angeforderte Ressource wurde nicht gefunden.")
-    exit()
+  else:
+    mb.showerror(f"Fehler {status}", f'Servers response is: {status}')
 
-app = ctk.CTk()
+def send(version = "", data = ""):
+  global paperURL
+  if version in data['versions']:
+    resultLabel.configure(text=f"Paper {version} Gefunden. \n Drücke Auf ""Download"" um Paper herunterzuladen.")
+    paperURL = data['versions'][version]
+  else:
+    resultLabel.configure(text=f"Paper {version} nicht gefunden.")
 
-app.geometry("400x200")
-app.title("PaperMC Downloader")
-app.iconbitmap("C:\\users\\felix\\Downloads\\official-minecraft-style-icons-removebg-preview.ico")
+def beforeSend(version = "", data = ""):
+  if not data: mb.showerror(f"Fehler", f'Data is None are you Online?'); return 1
+  if not version: resultLabel.configure(text=f"Gebe eine Version ein."); return 1
+  send(version, data)
 
-result_label = ctk.CTkLabel(app, text="/")
-result_label.pack(padx=20, pady=10)
+def GUI():
+  global resultLabel, versionInput
+  app = ctk.CTk()
+  app.geometry("400x200")
+  app.title("PaperMC Downloader")
+  app.iconbitmap("icon.ico")
 
+  resultLabel = ctk.CTkLabel(app, text="/")
+  resultLabel.pack(padx=20, pady=10)
 
-def copy_callback():
-    text_to_copy = copy_label.cget("text")  # holt den Text aus dem Label
-    app.clipboard_clear()
-    app.clipboard_append(text_to_copy)
+  download = ctk.CTkButton(app, text="Herunterladen", command=lambda: open(paperURL))
+  download.pack(padx=50)
 
-copy_button = ctk.CTkButton(app, text="Copy", command=copy_callback)
-copy_button.pack(padx=50)
+  versionInput = ctk.CTkEntry(app, placeholder_text="Version")
+  versionInput.pack(padx=20, pady=20)
 
-input_version = ctk.CTkEntry(app, placeholder_text="Version")
-input_version.pack(padx=20, pady=20)
+  submit = ctk.CTkButton(app, text="Senden", command=lambda: beforeSend(version=versionInput.get(), data=data))
+  submit.pack(padx=20)
 
-def button_callback():
-      eingabe = input_version.get()
-      target_version = eingabe
+  app.mainloop()
 
-      if target_version in data['versions']:
-            if console == True:
-                print(f"Version {target_version} -> URL: {data['versions'][target_version]}")
-            result_label.configure(text="/")
-            result_label.configure(text=f"Version {eingabe}: {data['versions'][target_version]}")
-            copy_label.configure(text=f"{data['versions'][target_version]}")
-      else:
-            if console == True:
-                  print(f"Version {target_version} nicht gefunden.")
-            result_label.configure(text="Version nicht gefunden")
-
-submit = ctk.CTkButton(app, text="Senden", command=button_callback)
-submit.pack(padx=20, pady=8)
-
-copy_label = ctk.CTkLabel(app, text="NAN")
-copy_label.pack(padx=28830, pady=14550)
-
-app.mainloop()
+getData()
+GUI()
