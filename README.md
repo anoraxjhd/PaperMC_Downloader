@@ -6,5 +6,4 @@ Clone This Project using something like
 after that you can use
 ``pip install -r requirements.txt && python get_paper.py``
 
-Then run the file type the version you want
-copy the URL and download and open it this will download the wanted paper Version
+Then type the version you want download the JAR and you are good to go!
