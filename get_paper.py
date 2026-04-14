@@ -53,7 +53,7 @@ def download(url):
 def send(version, build = "latest"):
   # Setup stuff
   if not version.count(".") >= 1: return False
-  global paperURL, terminalClose, versionURL
+  global paperURL, versionURL
   versionURL = f"https://fill.papermc.io/v3/projects/{project}/versions/{version}/builds"
   data = get(versionURL).json()
   # Checking if build is supposed to be latest
