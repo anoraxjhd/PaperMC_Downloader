@@ -3,8 +3,7 @@ from threading import Thread
 from requests import get
 import customtkinter as ctk
 from tkinter import messagebox as mb
-from webbrowser import open as wbopen
-from json import load
+from json import load, dumps
 from sys import argv
 
 # VARS
@@ -17,14 +16,19 @@ data = None
 # Settings
 
 lang = "en"
+project = "paper"
+MINECRAFT_VERSION = None
+RELEASE = 1
+
 ctk.set_appearance_mode("dark")
-URL = "https://qing762.is-a.dev/api/papermc/"
+URL = f"https://fill.papermc.io/v3/projects/{project}"
+versionURL = None
+
 allowedStatus = [200, 203]
 supportedLanguages = ["de", "en"]
 
 with open("translations.json", "r", encoding="UTF-8") as f:
   translations = load(f)
-
 def translate(text, lang="en"):
   try:
     return translations.get(lang, {}).get(text, text)
@@ -41,59 +45,82 @@ def getData():
       print(f"\n{translate("Error", lang=lang)}: {translate("Data is None are you Online", lang=lang)}"); exit(1)
     mb.showerror(str(translate("Error", lang=lang)) + " " + str(status), f'{translate("Servers response is", lang=lang)}: {status}'); app.destroy(); exit(1)
 
-def send(version = "", data = ""):
-  global paperURL, terminalClose
-  if version in data['versions']:
-    if no_gui:
-      print(f"Paper {version} {translate("found", lang=lang)}. \n{translate("Open the Link to download Paper", lang=lang)}: {data['versions'][version]}.")
-      terminalClose = True
-    else:
-      resultLabel.configure(text=f"Paper {version} {translate("found", lang=lang)}. \n {translate("Press ""Download"" to download Paper", lang=lang)}.")
-      paperURL = data['versions'][version]
-  else:
-    if no_gui:
-      print(f"Paper {version} {translate("not found", lang=lang)}.")
-    else:
-      resultLabel.configure(text=f"Paper {version} {translate("not found", lang=lang)}.")
+def download(url):
+  with open(url.split("/")[-1], 'wb') as f:
+    f.write(get(url).content)
 
-def beforeSend(version = "", data = ""):
-  if no_gui and not data:
-    print(f"{translate("Error", lang=lang)}: {translate("Data is None are you Online?", lang=lang)}"); return 1
+def send(version, build = "latest"):
+  # Setup stuff
+  if not version.count(".") >= 1: return
+  global paperURL, terminalClose, MINECRAFT_VERSION, versionURL
+  versionURL = f"https://fill.papermc.io/v3/projects/{project}/versions/{version}/builds"
+  data = get(versionURL).json()
+  # Checking if build is supposed to be latest
+  if build == "latest":
+    try:
+      paperURL = data[0]["downloads"]["server:default"]["url"]
+      if not no_gui:
+        resultLabel.configure(text=f"Paper {version} {translate("found", lang=lang)}.\n{translate("Press ""Download"" to download Paper", lang=lang)}.")
+        return paperURL
+      else:
+        print(f"Paper {version} {translate("found", lang=lang)}.\n{translate("Downloading", lang=lang)}...")
+        return paperURL
+    except KeyError:
+      if not no_gui:
+        resultLabel.configure(text=f"Paper {version} {translate("not found", lang=lang)}.")
+        return False
+      else:
+        print(f"Paper {version} {translate("not found", lang=lang)}.")
+        return False
   else:
-    if not version: resultLabel.configure(text=f"{translate("Enter a version", lang=lang)}."); return 1
-    if not data: mb.showerror(translate("Error", lang=lang), f'{translate("Data is None are you Online?", lang=lang)}'); return 1
-  send(version, data)
+    for i in data:
+      if i["id"] == int(build):
+        return i["downloads"]["server:default"]["url"]
+    else:
+      return False
 
-def openBrowser(URL):
-  if not URL: resultLabel.configure(text=f"{translate("Enter a Version and Click Send", lang=lang)}."); return 1
-  wbopen(URL)
+def beforeSend(version = "", build = "latest"):
+  if not no_gui and not version:
+    print(f"{translate("Enter a version", lang=lang)}."); return 1
+  if no_gui and not version:
+    print(f"{translate("Enter a version", lang=lang)}."); return 1
+  return send(version, build=build)
 
 def GUI():
   global resultLabel, versionInput, app
   app = ctk.CTk()
   app.geometry("400x200")
   app.title("PaperMC Downloader")
-  app.iconbitmap("icon.ico")
+  app.iconbitmap("src/icon.ico")
 
   resultLabel = ctk.CTkLabel(app, text="/")
   resultLabel.pack(padx=20, pady=10)
 
-  download = ctk.CTkButton(app, text=translate("Download", lang=lang), command=lambda: openBrowser(paperURL))
-  download.pack(padx=50)
+  btnDownload = ctk.CTkButton(app, text=translate("Download", lang=lang), command=lambda: download(paperURL))
+  btnDownload.pack(padx=50)
 
   versionInput = ctk.CTkEntry(app, placeholder_text=translate("Version", lang=lang))
   versionInput.pack(padx=20, pady=20)
 
-  submit = ctk.CTkButton(app, text=translate("Send", lang=lang), command=lambda: beforeSend(version=versionInput.get(), data=data))
+  submit = ctk.CTkButton(app, text=translate("Send", lang=lang), command=lambda: beforeSend(version=versionInput.get()))
   submit.pack(padx=20)
 
   app.mainloop()
 
 def terminal():
+  global terminalClose
   while not terminalClose:
     version = input(f"{translate('Version', lang=lang)}: ")
     if version:
-      beforeSend(version=version, data=data)
+      release = input(f"{translate("ReleaseTextTerminal", lang=lang)}")
+      if release:
+        paperURL = beforeSend(version=version, build=release)
+      else:
+        paperURL = beforeSend(version=version)
+      if paperURL != False:
+        download(paperURL)
+        terminalClose = True
+      
 
 def parseArgs():
   global lang, no_gui
