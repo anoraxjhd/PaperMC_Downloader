@@ -4,7 +4,15 @@ if you want to use this then:
 Clone This Project using something like git:<br>
 ``git clone https://github.com/anoraxjhd/PaperMC_Downloader.git && cd PaperMC_Downloader``<br>
 after that you can use:
-``pip install -r requirements.txt && python get_paper.py``
+``pip install -r requirements.txt && python main.py``
+
+Supportet Arguments are:
+- ``--no-gui``
+- ``--lang <lang (2)>``
+
+Supportet Languages Are:
+- Englisch (en)
+- German/Deutsch (de)
 
 Then type the version you want download the JAR and you are good to go!
 
